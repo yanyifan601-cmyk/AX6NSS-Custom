@@ -1,0 +1,40 @@
+name: OpenWrt Build
+
+# 什么时候触发，push 到 main 分支时自动执行
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用最新的 ubuntu 环境
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4  # 下载你的代码
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev libssl-dev zlib1g-dev gawk git gettext libcurl4-openssl-dev unzip
+
+      - name: Update feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Build default config
+        run: |
+          make defconfig
+
+      - name: Compile firmware
+        run: |
+          make -j$(nproc)  # 多核并行编译，节省时间
+          
+      # 如果你想保存产物(固件)可以加步骤上传artifact
+      # - name: Upload firmware
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: firmware
+      #     path: bin/targets/
